@@ -140,6 +140,7 @@ namespace great
             {
                 if (_tropoModel != 0)
                 {
+                    _tropoModel->_ele = ele;
                     zwd = _tropoModel->getZWD(ell, epoch);
                     zhd = _tropoModel->getZHD(ell, epoch);
                 }
@@ -147,29 +148,43 @@ namespace great
 
             double mfh, mfw, dmfh, dmfw;
             mfh = mfw = dmfh = dmfw = 0.0;
-            if (_mf_ztd == ZTDMPFUNC::GMF)
-            {
-                t_gmf mf;
-                mf.gmf(epoch.mjd(), ell[0], ell[1], ell[2], G_PI / 2.0 - ele,
-                       mfh, mfw, dmfh, dmfw);
-            }
-            else if (_mf_ztd == ZTDMPFUNC::COSZ)
-            {
-                mfh = mfw = 1 / sin(ele);
-                dmfh = dmfw = -(cos(ele)) / (sin(ele) * sin(ele));
-            }
-            else
-                return 0.0;
+            if (!WPD_TEST)
+			{
+				if (_mf_ztd == ZTDMPFUNC::GMF)
+				{
+					t_gmf mf;
+					mf.gmf(epoch.mjd(), ell[0], ell[1], ell[2], G_PI / 2.0 - ele,
+						mfh, mfw, dmfh, dmfw);
+				}
+				else if (_mf_ztd == ZTDMPFUNC::COSZ)
+				{
+					mfh = mfw = 1 / sin(ele);
+					dmfh = dmfw = -(cos(ele)) / (sin(ele) * sin(ele));
+				}
+				else
+					return 0.0;
+			}
+			else
+			{
+				//GPT3投影函数
+				mfh = _tropoModel->_map_dty;
+				mfw = _tropoModel->_map_wet;
+			}
+
 
             satdata.addmfH(mfh);
             satdata.addmfW(mfw);
 
             delay = mfh * zhd + mfw * zwd;
 
-            if (!_trop_est && satdata.obsWithCorr())
+            if (!WPD_TEST)
             {
-                delay = mfh * zhd;
+                if (!_trop_est && satdata.obsWithCorr())
+                {
+                    delay = mfh * zhd;
+                }
             }
+
 
             double grdN, grdE;
             grdN = grdE = 0.0;

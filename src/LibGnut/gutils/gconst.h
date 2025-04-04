@@ -28,6 +28,8 @@ using namespace std;
 
 namespace gnut
 {
+#define WPD_TEST 1
+
 // function
 // get min
 #define MIN(x, y) ((x) < (y) ? (x) : (y))

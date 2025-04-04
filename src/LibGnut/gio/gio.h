@@ -38,6 +38,7 @@ namespace gnut
     class t_gcoder;
 
     /** @brief class for t_gfile. */
+    // I/O basis class
     class LibGnut_LIBRARY_EXPORT t_gio
     {
 

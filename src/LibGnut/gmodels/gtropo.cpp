@@ -22,6 +22,18 @@ namespace gnut
 
     t_gtropo::t_gtropo() 
     {
+        //vector<double> _sod_metro = { 6600.0,8400.0,10200.0,12000.0,13800.0,15600.0,17400.0,
+        //                    19200.0,21000.0,22800.0,24600.0,26400.0,28200.0,30000.0,31800.0,33600.0 };
+        //vector<double> _zhd_metro = { 2.285,2.286,2.285,2.285,2.284,2.283,2.282,2.281,2.280,
+        //                            2.279,2.278,2.278,2.278,2.278,2.278,2.278 };
+        //vector<double> _zwd_metro = { 0.224,0.233,0.240,0.241,0.240,0.241,0.243,0.243,0.245
+        //                            ,0.247,0.248,0.251,0.251,0.254,0.253,0.254 };
+
+        //vector<double> _sod_era5 = { 3600.0,7200.0,10800.0,14400.0,18000.0,21600.0,25200.0,28800.0,32400.0,36000.0 };
+        //vector<double> _zhd_era5_bott = { 2.285,2.286,2.286,2.284,2.283,2.281,2.280,2.279,2.279,2.280, };
+        //vector<double> _zwd_era5_bott = { 0.250,0.248,0.251,0.258,0.264,0.269,0.271,0.272,0.269,0.273 };
+        //vector<double> _zhd_era5_top = { 2.079,2.080,2.080,2.079,2.078,2.076,2.076,2.075,2.075,2.076 };
+        //vector<double> _zhd_era5_top = { 0.168,0.165,0.167,0.173,0.178,0.182,0.184,0.183,0.181,0.185 };
     }
 
     t_gtropo::~t_gtropo()
@@ -43,6 +55,12 @@ namespace gnut
     {
 
         return 0.0; // NWM_UNKNOWN;
+    }
+
+    double t_saast::getZTD(const t_gtriple& ell, const t_gtime& epo)
+    {
+
+        return 0.0;
     }
 
     double t_saast::getSTD(const double &ele, const double &height)
@@ -79,31 +97,134 @@ namespace gnut
 
     double t_saast::getZHD(const t_gtriple &Ell, const t_gtime &epoch)
     {
+        if (!WPD_TEST)
+        {
+			double P, T, N;
 
-        double P, T, N;
+			_gpt.gpt_v1(epoch.mjd(), Ell[0], Ell[1], Ell[2], P, T, N);
 
-        _gpt.gpt_v1(epoch.mjd(), Ell[0], Ell[1], Ell[2], P, T, N);
+			double delay = (0.002277 * P) /
+				(1.0 - 0.00266 * cos(2.0 * Ell[0]) - 0.00000028 * Ell[2]);
+            return delay;
+        }
+        else
+        {
+            //GPT3
+            //double p_gpt3 = 0.0, t_gpt3 = 0.0, tm_gpt3 = 0.0, e_gpt3 = 0.0, ah_gpt3 = 0.0, aw_gpt3 = 0.0, la_gpt3 = 0.0;
+            //_gpt3.getGPT3Data("gpt3_1.grd", epoch.mjd(), Ell[0], Ell[1], Ell[2], 0
+            //    , &p_gpt3, &t_gpt3, nullptr, &tm_gpt3, &e_gpt3, &ah_gpt3, &aw_gpt3, &la_gpt3, nullptr
+            //    , nullptr, nullptr, nullptr, nullptr);
 
-        double delay = (0.002277 * P) /
-                       (1.0 - 0.00266 * cos(2.0 * Ell[0]) - 0.00000028 * Ell[2]);
+            double delay = (0.002277 * _gpt3._p_gpt3) /
+                (1.0 - 0.00266 * cos(2.0 * Ell[0]) - 0.00000028 * Ell[2]);
+            this->_zhd = delay;
+            return delay;
 
-        return delay;
+            //if (Ell[2] < 500)//BOTT
+            //{
+            //    for (int i = 0; i < _sod_era5.size() - 1; i++)
+            //    {
+            //        if (epoch.sod() >= _sod_era5[i] && epoch.sod() <= _sod_era5[i + 1])
+            //        {
+            //            return _zhd_era5_bott[i];
+            //        }
+            //    }
+            //}
+            //else if (Ell[2] > 500)//TOP
+            //{
+            //    for (int i = 0; i < _sod_era5.size() - 1; i++)
+            //    {
+            //        if (epoch.sod() >= _sod_era5[i] && epoch.sod() <= _sod_era5[i + 1])
+            //        {
+            //            return _zhd_era5_top[i];
+            //        }
+            //    }
+            //}
+
+        }     
     }
 
     double t_saast::getZWD(const t_gtriple &Ell, const t_gtime &epoch)
     {
+        if(!WPD_TEST)
+        {
+            double P, T, N;
+            _gpt.gpt_v1(epoch.mjd(), Ell[0], Ell[1], Ell[2], P, T, N);
 
-        double P, T, N;
-        _gpt.gpt_v1(epoch.mjd(), Ell[0], Ell[1], Ell[2], P, T, N);
+            //add need test
+            double hh = 0.6;
+            double e = hh * 6.11 * pow(10.0, (7.5 * T / (T + 237.3)));
 
-        //add need test
-        double hh = 0.6;
-        double e = hh * 6.11 * pow(10.0, (7.5 * T / (T + 237.3)));
+            T += 273.15;
 
-        T += 273.15;
+            double delay = (0.0022768 * e * (1255.0 / T + 0.05)) / (1.0 - 0.00266 * cos(2.0 * Ell[0]) - 0.00000028 * Ell[2]);
+            return delay;
+        }
+        else
+        {
+            //if (this->_zwd > 1e-9)
+			//GPT3
+			_gpt3._p_gpt3 = 0.0;
+			_gpt3._t_gpt3 = 0.0;
+			_gpt3._tm_gpt3 = 0.0;
+			_gpt3._e_gpt3 = 0.0;
+			_gpt3._la_gpt3 = 0.0;
+			_gpt3._ah_gpt3 = 0.0;
+			_gpt3._aw_gpt3 = 0.0;
+			_gpt3.getGPT3Data("gpt3_1.grd", epoch.mjd(), Ell[0], Ell[1], Ell[2], 0
+				, &_gpt3._p_gpt3, &_gpt3._t_gpt3, nullptr, &_gpt3._tm_gpt3, &_gpt3._e_gpt3, &_gpt3._ah_gpt3, &_gpt3._aw_gpt3, &_gpt3._la_gpt3, nullptr
+				, nullptr, nullptr, nullptr, nullptr);
+			double delay = _gpt3.asknewet_gpt3(_gpt3._e_gpt3, _gpt3._tm_gpt3, _gpt3._la_gpt3);
 
-        double delay = (0.0022768 * e * (1255.0 / T + 0.05)) / (1.0 - 0.00266 * cos(2.0 * Ell[0]) - 0.00000028 * Ell[2]);
-        return delay;
+			_gpt3.GPT3_map(_gpt3._ah_gpt3, _gpt3._aw_gpt3, epoch.mjd(), Ell[0], Ell[1], Ell[2]
+				, G_PI / 2.0 - this->_ele, &this->_map_dty, &this->_map_wet);
+			this->_zwd = delay;
+			return delay;
+
+
+            //if (Ell[2] < 500)//BOTT
+            //{
+            //    double ah = this->h_abs_bott[0];
+            //    double bh = this->h_abs_bott[0];
+            //    double ch = this->h_abs_bott[0];
+            //    double aw = this->w_abs_bott[0];
+            //    double bw = this->w_abs_bott[0];
+            //    double cw = this->w_abs_bott[0];
+            //    double el = this->ele;
+
+            //    this->_map_dty = (1 + (ah / (1 + bh / (1 + ch)))) / (sin(el) + (ah / (sin(el) + bh / (sin(el) + ch))));
+            //    this->_map_wet = (1 + (aw / (1 + bw / (1 + cw)))) / (sin(el) + (aw / (sin(el) + bw / (sin(el) + cw))));
+
+            //    for (int i = 0; i < _sod_era5.size()-1; i++)
+            //    {
+            //        if (epoch.sod() >= _sod_era5[i] && epoch.sod() <= _sod_era5[i + 1])
+            //        {
+            //            return _zwd_era5_bott[i];
+            //        }
+            //    }
+            //}
+            //else if(Ell[2] > 500)//TOP
+            //{
+            //    double ah = this->h_abs_top[0];
+            //    double bh = this->h_abs_top[0];
+            //    double ch = this->h_abs_top[0];
+            //    double aw = this->w_abs_top[0];
+            //    double bw = this->w_abs_top[0];
+            //    double cw = this->w_abs_top[0];
+            //    double el = this->ele;
+
+            //    this->_map_dty = (1 + (ah / (1 + bh / (1 + ch)))) / (sin(el) + (ah / (sin(el) + bh / (sin(el) + ch))));
+            //    this->_map_wet = (1 + (aw / (1 + bw / (1 + cw)))) / (sin(el) + (aw / (sin(el) + bw / (sin(el) + cw))));
+            //    for (int i = 0; i < _sod_era5.size() - 1; i++)
+            //    {
+            //        if (epoch.sod() >= _sod_era5[i] && epoch.sod() <= _sod_era5[i + 1])
+            //        {
+            //            return _zwd_era5_top[i];
+            //        }
+            //    }
+            //}
+        }
+
     }
 
     double t_davis::getZHD(const t_gtriple &Ell, const t_gtime &epoch)
