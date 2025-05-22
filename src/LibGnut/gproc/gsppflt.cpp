@@ -673,7 +673,7 @@ namespace gnut
         {
             if (_gModel->tropoModel() != 0)
             {
-                _param[itrp].apriori(_gModel->tropoModel()->getZHD(Ell, _epoch));
+                _param[itrp].apriori(_gModel->tropoModel()->getZHD(Ell, _epoch, GPT_MODEL));
             }
         }
 
@@ -744,7 +744,7 @@ namespace gnut
             // tropo (wet part) is constrained to this value
             double TRP_fix = 0;
             if (_gModel->tropoModel() != 0)
-                TRP_fix = _aprox_ztd_xml - _gModel->tropoModel()->getZHD(ell, _epoch);
+                TRP_fix = _aprox_ztd_xml - _gModel->tropoModel()->getZHD(ell, _epoch, GPT_MODEL);
 
             // Reduced measurement
             Vector_add(l, l.Nrows() + 1);
@@ -1519,20 +1519,20 @@ namespace gnut
             xyz2ell(XYZ, Ell, false);
             if (_gModel->tropoModel() != 0)
             {
-                _param[i].apriori(_gModel->tropoModel()->getZHD(Ell, _epoch));
+                _param[i].apriori(_gModel->tropoModel()->getZHD(Ell, _epoch, GPT_MODEL));
             }
 
             if (!_initialized || _Qx(i + 1, i + 1) == 0.0)
             {
                 if (_valid_ztd_xml)
                 {
-                    _param[i].value(_aprox_ztd_xml - _gModel->tropoModel()->getZHD(Ell, _epoch));
+                    _param[i].value(_aprox_ztd_xml - _gModel->tropoModel()->getZHD(Ell, _epoch, GPT_MODEL));
                 }
                 else
                 {
                     if (_gModel->tropoModel() != 0)
                     {
-                        _param[i].value(_gModel->tropoModel()->getZWD(Ell, _epoch));
+                        _param[i].value(_gModel->tropoModel()->getZWD(Ell, _epoch, GPT_MODEL));
                     }
                 }
 

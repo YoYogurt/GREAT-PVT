@@ -50,6 +50,7 @@ namespace gnut
         FLT_OUT
     };
 
+    //输出文件的数据类，包含输出文件的类型等信息 -wpd
     class LibGnut_LIBRARY_EXPORT t_gsetout : public virtual t_gsetbase
     {
     public:

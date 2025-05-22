@@ -64,6 +64,7 @@ namespace gnut
         string line;
         int consume = 0;
         int tmpsize = 0;
+        //t_gcoder::_getline 从 _buffer 获取读取到的数据-wpd
         while ((tmpsize = t_gcoder::_getline(line)) >= 0)
         {
 

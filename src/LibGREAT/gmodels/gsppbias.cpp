@@ -64,8 +64,8 @@ namespace great
         {
             if (_tropoModel != 0)
             {
-                zwd = _tropoModel->getZWD(ell, epoch);
-                zhd = _tropoModel->getZHD(ell, epoch);
+                zwd = _tropoModel->getZWD(ell, epoch, GPT_MODEL);
+                zhd = _tropoModel->getZHD(ell, epoch, GPT_MODEL);
             }
         }
 

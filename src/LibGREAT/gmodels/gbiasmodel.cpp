@@ -173,6 +173,7 @@ namespace great
 
     bool t_gbiasmodel::_wgt_obs_ALL(const t_gdata::ID_TYPE &obj_type, t_gobs &gobs1, t_gsatdata &obsdata, const double &factorP, double &wgt)
     {
+        //定权-随机模型 -wpd
         GSYS gsys = obsdata.gsys();
         string gsat = obsdata.sat();
 

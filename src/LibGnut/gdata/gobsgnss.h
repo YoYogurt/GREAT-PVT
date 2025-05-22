@@ -1045,8 +1045,8 @@ namespace gnut
 
     protected:
         map<GOBS, double> _gobs;  // maps of observations
-        map<GOBS, int> _glli;     // maps of lost-of-lock identifications
-        map<GOBS, int> _gslip;    // maps of estimated cycle slips
+        map<GOBS, int> _glli;     // maps of lost-of-lock identifications 失锁标记 -wpd
+        map<GOBS, int> _gslip;    // maps of estimated cycle slips  周跳标记 -wpd
         map<GOBS, int> _goutlier; // maps of gross error of range/doppler observations
         map<GOBS, int> _gLevel;   // level
 

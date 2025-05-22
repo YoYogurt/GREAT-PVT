@@ -522,9 +522,9 @@ namespace gnut
 			for (int i = 0; i < 4; i++)
 			{
 				rewind(fp);
-				fgets(line, 442, fp);//������һ��
+				fgets(line, 442, fp);
 				fseek(fp, 442 * indx[i], SEEK_SET);
-				fgets(line, 442, fp);//��ȡһ��
+				fgets(line, 442, fp);
 				lineLen = strlen(line);
 				split_string(true, line, line + lineLen, " ", &nword, word);
 				for (int j = 0; j < nword; j++)
@@ -561,7 +561,6 @@ namespace gnut
 					Ge_w_grid[j][k] /= 100000;
 				}
 			}
-			//��������
 			//transforming ellipsoidal height to orthometric height : Hortho = -N + Hell
 			double undul[4] = { u_grid[0][0],u_grid[0][1],u_grid[0][2],u_grid[0][3] };
 			double hgt[4] = { h_ell - undul[0], h_ell - undul[1], h_ell - undul[2], h_ell - undul[3] };
@@ -604,13 +603,16 @@ namespace gnut
 				//lapse rate of the temperature in degree / m
 				dTl[j] = dT_grid[j][0] + dT_grid[j][1] * cosfy
 					+ dT_grid[j][2] * sinfy + dT_grid[j][3] * coshy + dT_grid[j][4] * sinhy;
+
 				// temperature reduction to station height
+				// height reduction
 				Tl[j] = T0[j] + dTl[j] * redh[j] - 273.15;
 				// virtual temperature
 				Tv[j] = T0[j] * (1 + 0.6077 * Ql[j]);
 				c[j] = gm * dMtr / Rg / Tv[j];
 
 				// pressure in hPa
+				// height reduction
 				pl[j] = p0[j] * exp(-c[j] * redh[j]) / 100;
 
 
@@ -639,6 +641,7 @@ namespace gnut
 					+ Ge_w_grid[j][2] * sinfy + Ge_w_grid[j][3] * coshy + Ge_w_grid[j][4] * sinhy;
 
 				//water vapor pressure in hPa
+				// height reduction
 				e0[j] = Ql[j] * p0[j] / (0.622 + 0.378 * Ql[j]) / 100;//on the grid
 				el[j] = e0[j] * pow((100 * pl[j] / p0[j]), (lal[j] + 1));// on the station height - (14) Askne and Nordius, 1987
 			}
@@ -1686,7 +1689,7 @@ namespace gnut
 
 		for (int i = 1; i < nmax; i++)
 		{
-			int num_i = i + 1; //��Ӧmatlab�в���������ֵi���洢���ݵ�������Ȼ��i
+			int num_i = i + 1; 
 			V[i + 1][0] = ((2 * num_i - 1) * z * V[i][0] - (num_i - 1) * V[i - 1][0]) / num_i;
 			W[i + 1][0] = 0;
 			//printf("%d\t%.6f\n", i, V[i + 1][0]);
@@ -1694,7 +1697,7 @@ namespace gnut
 
 		for (int m = 0; m < nmax; m++)
 		{
-			int num_m = m + 1;//��Ӧmatlab�в���������ֵm���洢���ݵ�������Ȼ��m
+			int num_m = m + 1;
 			V[m + 1][m + 1] = (2 * num_m - 1) * (x * V[m][m] - y * W[m][m]);
 			W[m + 1][m + 1] = (2 * num_m - 1) * (x * W[m][m] + y * V[m][m]);
 			if (m < nmax - 1)
@@ -1704,7 +1707,7 @@ namespace gnut
 			}
 			for (int n = m + 2; n < nmax; n++)
 			{
-				int num_n = n + 1;//��Ӧmatlab�в���������ֵn���洢���ݵ�������Ȼ��n
+				int num_n = n + 1;
 				V[n + 1][m + 1] = ((2 * num_n - 1) * z * V[n][m + 1] - (num_n + num_m - 1) * V[n - 1][m + 1]) / (num_n - num_m);
 				W[n + 1][m + 1] = ((2 * num_n - 1) * z * W[n][m + 1] - (num_n + num_m - 1) * W[n - 1][m + 1]) / (num_n - num_m);
 			}
@@ -1830,6 +1833,11 @@ namespace gnut
 
 		double zwd = 1e-6 * (k2p + k3 / Tm) * Rd1 / (lambda + 1) / gm * e;
 		return zwd;
+	}
+
+	bool t_gpt3::has_gpt3_data()
+	{
+		return (fabs(_p_gpt3) > 1e-9);
 	}
 
 

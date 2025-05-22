@@ -33,6 +33,7 @@ namespace gnut
     t_gsetproc::t_gsetproc()
         : t_gsetbase()
     {
+        //Set default values in the constructor. -wpd
         _set.insert(XMLKEY_PROC);
         _phase = true;
         _tropo = true;

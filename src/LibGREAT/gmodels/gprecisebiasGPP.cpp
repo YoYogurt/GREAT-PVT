@@ -69,21 +69,21 @@ namespace great
         double omc = 0.0, wgt = 0.0;
         vector<pair<int, double>> coef;
 
-        if (!_omc_obs_ALL(epoch, _crt_obs, params, gobs, omc))
+        if (!_omc_obs_ALL(epoch, _crt_obs, params, gobs, omc))//观测新息矩阵的计算 -wpd
         {
             if (_spdlog)
                 SPDLOG_LOGGER_ERROR(_spdlog, "omc obs failed");
             return false;
         };
 
-        if (!_wgt_obs_ALL(t_gdata::REC, gobs, _crt_obs, 1.0, wgt))
+        if (!_wgt_obs_ALL(t_gdata::REC, gobs, _crt_obs, 1.0, wgt))//观测方差矩阵的计算 -wpd
         {
             if (_spdlog)
                 SPDLOG_LOGGER_ERROR(_spdlog, "weight obs failed");
             return false;
         };
 
-        if (!_prt_obs_ALL(epoch, _crt_obs, params, gobs, coef))
+        if (!_prt_obs_ALL(epoch, _crt_obs, params, gobs, coef))//系数矩阵的计算 -wpd
         {
             if (_spdlog)
                 SPDLOG_LOGGER_ERROR(_spdlog, "partialrange obs failed");
@@ -437,6 +437,7 @@ namespace great
         {
             t_gpar par = pars.getPar(ipar);
             double coeff_value = 0.0;
+            //系数矩阵的计算 -wpd
             t_gbiasmodel::_Partial_basic(crt_epo, _crt_obs, gobs, par, coeff_value);
             if (coeff_value != 0.0)
             {

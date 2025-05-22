@@ -118,6 +118,8 @@ namespace gnut
 
         double asknewet_gpt3(double e, double Tm, double lambda);
 
+        bool has_gpt3_data();
+
     };
 }
 

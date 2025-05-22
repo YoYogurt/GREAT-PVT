@@ -45,6 +45,7 @@ namespace gnut
         /** @brief default destructor. */
         virtual ~t_gbias();
 
+        // 增加dcb的函数-wpd
         /** @brief add single differential bias in meters. */
         void set(const t_gtime &beg, const t_gtime &end, double d, GOBS obs1, GOBS obs2 = X);
         void set(double d, GOBS obs1, GOBS obs2 = X);

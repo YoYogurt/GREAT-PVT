@@ -757,13 +757,13 @@ namespace great
             t_gbaseEquation tempP, tempL;
             vector<int> index(10, 0); 
 
-            for (int isite = 0; isite < 2; isite++)
+            for (int isite = 0; isite < 2; isite++) //isite用于区分基准站和流动站，0为基准站，1为流动站 -wpd
             {
-                t_gsatdata *satdata_ptr;
+                t_gsatdata *satdata_ptr; //数据指针 -wpd
                 if (isite == 0)
-                    satdata_ptr = &obsdata_other;
+                    satdata_ptr = &obsdata_other; //基准站数据 -wpd
                 else
-                    satdata_ptr = &obsdata;
+                    satdata_ptr = &obsdata; //流动站数据 -wpd
 
                 for (const auto &iter : crt_bands)
                 {

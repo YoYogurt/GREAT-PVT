@@ -22,6 +22,7 @@ int main(int argc, char** argv)
     gset.app("GRAET-PVT", "$Ver: 1.1 $", "$Rev:  $", "(https://github.com/GREAT-WHU/GREAT-PVT)", __DATE__, __TIME__);
 
     // Get the arguments from the command line
+    // 获取配置文件参数 -wpd
     gset.arg(argc, argv, true, false);
 
     // Creat and set the log file : ppp.log
@@ -49,17 +50,17 @@ int main(int argc, char** argv)
     if (!sample) sample = int(dynamic_cast<t_gsetgen*>(&gset)->sampling_default());
 
     //--- INITIALIZATIONS ---
-    t_gdata* gdata = nullptr;
-    t_gnavde* gde = new t_gnavde;
+    t_gdata*    gdata = nullptr;
+    t_gnavde*   gde = new t_gnavde;
     t_gpoleut1* gerp = new t_gpoleut1;
-    t_gallobs* gobs = new t_gallobs();  gobs->spdlog(my_logger); gobs->gset(&gset);
+    t_gallobs*  gobs = new t_gallobs();  gobs->spdlog(my_logger); gobs->gset(&gset);
     t_gallprec* gorb = new t_gallprec(); gorb->spdlog(my_logger);
-    t_gallpcv* gpcv = nullptr; if (gset.input_size("atx") > 0) { gpcv = new t_gallpcv;  gpcv->spdlog(my_logger); }
-    t_gallotl* gotl = nullptr; if (gset.input_size("blq") > 0) { gotl = new t_gallotl;  gotl->spdlog(my_logger); }
+    t_gallpcv*  gpcv = nullptr; if (gset.input_size("atx") > 0) { gpcv = new t_gallpcv;  gpcv->spdlog(my_logger); }
+    t_gallotl*  gotl = nullptr; if (gset.input_size("blq") > 0) { gotl = new t_gallotl;  gotl->spdlog(my_logger); }
     t_gallbias* gbia = nullptr; if (gset.input_size("biasinex") > 0 ||gset.input_size("bias") > 0) { gbia = new t_gallbias; gbia->spdlog(my_logger); }
-    t_gallobj* gobj = new t_gallobj(my_logger, gpcv, gotl); gobj->spdlog(my_logger);
-    t_gupd* gupd = nullptr; if (gset.input_size("upd") > 0) { gupd = new t_gupd;  gupd->spdlog(my_logger); }
-    t_gifcb* gifcb = nullptr;  if (gset.input_size("ifcb") > 0) { gifcb = new t_gifcb;  gifcb->spdlog(my_logger); }
+    t_gallobj*  gobj = new t_gallobj(my_logger, gpcv, gotl); gobj->spdlog(my_logger);
+    t_gupd*     gupd = nullptr; if (gset.input_size("upd") > 0) { gupd = new t_gupd;  gupd->spdlog(my_logger); }
+    t_gifcb*    gifcb = nullptr;  if (gset.input_size("ifcb") > 0) { gifcb = new t_gifcb;  gifcb->spdlog(my_logger); }
 
     // vgppp for the process of ppp with filter
     vector<t_gpvtflt*> vgpvt;
@@ -81,7 +82,7 @@ int main(int argc, char** argv)
         gorb->use_clksp3(true);
     }
 
-    // SET OBJECTS
+    // SET OBJECTS, RTK-related- wpd
     set<string>::const_iterator itOBJ;
     set<string> obj = dynamic_cast<t_gsetrec*>(&gset)->objects();
     for (itOBJ = obj.begin(); itOBJ != obj.end(); ++itOBJ) 
@@ -117,6 +118,7 @@ int main(int argc, char** argv)
     }
 
     // DATA READING
+    // 逐文件读取数据 -wpd
     multimap<IFMT, string>::const_iterator itINP = inp.begin();
     for (size_t i = 0; i < inp.size() && itINP != inp.end(); ++i, ++itINP)
     {
@@ -184,6 +186,7 @@ int main(int argc, char** argv)
 
         }
     }
+    
     // set antennas for satllites (must be before PCV assigning)
     t_gtime beg = dynamic_cast<t_gsetgen*>(&gset)->beg();
     gobj->read_satinfo(beg);
@@ -200,12 +203,12 @@ int main(int argc, char** argv)
     if (gotl)data->Add_Data(t_gdata::type2str(gotl->id_type()), gotl);
     if (gde)data->Add_Data(t_gdata::type2str(gde->id_type()), gde);
     if (gerp)data->Add_Data(t_gdata::type2str(gerp->id_type()), gerp);
-    if (gupd && dynamic_cast<t_gsetamb*>(&gset)->fix_mode() != FIX_MODE::NO && !isBase)
+    if (gupd && dynamic_cast<t_gsetamb*>(&gset)->fix_mode() != FIX_MODE::NO && !isBase) //ppp-ar related -wpd
     {
         data->Add_Data(t_gdata::type2str(gupd->id_type()), gupd);
     }
-    int frequency = dynamic_cast<t_gsetproc*>(&gset)->frequency();
-    set<string> system = dynamic_cast<t_gsetgen*>(&gset)->sys();
+    int frequency = dynamic_cast<t_gsetproc*>(&gset)->frequency(); //解算频率数 <frequency> -wpd
+    set<string> system = dynamic_cast<t_gsetgen*>(&gset)->sys(); //解算系统数 <sys> -wpd
     if (frequency >= 3 && system.find("GPS") != system.end() && !isBase)
     {
         if (gifcb)data->Add_Data(t_gdata::type2str(gifcb->id_type()), gifcb);
@@ -221,6 +224,7 @@ int main(int argc, char** argv)
         vector<string> list_rover = gset.list_rover();  
         sites = set<string>(list_rover.begin(), list_rover.end());
     }
+    //逐个测站解算 -wpd
     int nsite = sites.size();
     set<string>::iterator it = sites.begin();
     while (i < nsite)
@@ -253,7 +257,7 @@ int main(int argc, char** argv)
         // Add site data
         vgpvt.push_back(0); int idx = vgpvt.size() - 1;
         vgpvt[idx] = new t_gpvtflt(site, site_base, &gset, my_logger, data);
-        if (dynamic_cast<t_gsetamb*>(&gset)->fix_mode() != FIX_MODE::NO && !isBase)
+        if (dynamic_cast<t_gsetamb*>(&gset)->fix_mode() != FIX_MODE::NO && !isBase) //ppp-ar related -epd
         {
             vgpvt[idx]->Add_UPD(gupd);
         }
@@ -266,6 +270,7 @@ int main(int argc, char** argv)
         runepoch = t_gtime::current_time(t_gtime::GPS);
 
         // The main processing code : processBatch
+        // 逐测站解算 -wpd
         vgpvt[idx]->processBatch(beg, end, true);
 
         // The time when process ends
@@ -278,7 +283,7 @@ int main(int argc, char** argv)
         i++;
     }
 
-    //Delete pointer
+    //Delete pointer 析构对象 释放内存 -wpd
     for (size_t i = 0; i < gio.size(); ++i) { delete gio[i]; }; gio.clear();
     for (size_t i = 0; i < gcoder.size(); ++i) { delete gcoder[i]; }; gcoder.clear();
     for (unsigned int i = 0; i < vgpvt.size(); ++i) { if (vgpvt[i])  delete vgpvt[i]; }

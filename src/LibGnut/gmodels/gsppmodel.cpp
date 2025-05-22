@@ -59,6 +59,7 @@ namespace gnut
         else if (_trpModStr == gnut::TROPMODEL::HOPFIELD)
             _tropoModel = make_shared<t_hopf>();
     }
+
     t_gsppmodel::t_gsppmodel(t_spdlog spdlog, string site, t_gsetbase *settings)
         : _observ(gnut::OBSCOMBIN::IONO_FREE)
     {
@@ -337,8 +338,8 @@ namespace gnut
         {
             if (_tropoModel != 0)
             {
-                zwd = _tropoModel->getZWD(ell, epoch);
-                zhd = _tropoModel->getZHD(ell, epoch);
+                zwd = _tropoModel->getZWD(ell, epoch, GPT_MODEL);
+                zhd = _tropoModel->getZHD(ell, epoch, GPT_MODEL);
             }
         }
 

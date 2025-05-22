@@ -424,7 +424,7 @@ namespace gnut
 
         return 1;
     }
-
+    //存储rnx数据的函数 -wpd
     int t_rinexo3::_decode_data()
     {
 

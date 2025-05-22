@@ -58,6 +58,7 @@ namespace gnut
         _maxres_def_doppler[QZS] = 0.1;
         _maxres_def_doppler[IRN] = 0.1;
 
+        //把gnss_data中程序预设的数据转换为t_gsetgnss的成员变量，便于后续访问，wpd
         t_map_gnss gnss_data = GNSS_DATA_PRIORITY();
         for (auto itGNSS = gnss_data.begin(); itGNSS != gnss_data.end(); ++itGNSS) 
         {

@@ -1355,23 +1355,23 @@ int great::t_gpvtflt::_processEpoch(const t_gtime &runEpoch)
 
     do
     {
-        _remove_sat(outlier);
+        _remove_sat(outlier); //删除残差大的卫星观测数据,阈值由xml中<max res norm>给定,-wpd
         if (_epoch.sow() > 345330)
         {
             cout << endl;
         }
-        if (_prepareData() < 0)
+        if (_prepareData() < 0)//数据预处理,卫星位置计算,测站初始位置计算  -wpd
         {
             if (_initialized)
             {
-                _predict(runEpoch); 
+                _predict(runEpoch); // 一步预测，参数先验、过程噪声 -wpd
             }
             return -1;
         }
 
         QsavBP = _Qx;
         XsavBP = _param;
-        _predict(runEpoch);
+        _predict(runEpoch); // 一步预测，参数先验、过程噪声 -wpd
         _initialized = true;
 
         if (_data.size() < _minsat)
@@ -1414,7 +1414,7 @@ int great::t_gpvtflt::_processEpoch(const t_gtime &runEpoch)
         // use combmodel
         t_gfltEquationMatrix equ;
 
-        iobs = _cmp_equ(equ);
+        iobs = _cmp_equ(equ);//组观测方程，计算Apl矩阵 -wpd
 
         equ.chageNewMat(A, P, l, nPar);
         dx.ReSize(nPar);
@@ -1440,15 +1440,16 @@ int great::t_gpvtflt::_processEpoch(const t_gtime &runEpoch)
 
         if (_isBase)
         {
-            if (_combineDD(A, P, l) < 0)
+            if (_combineDD(A, P, l) < 0) // 双差观测方程，更新Apl矩阵 -wpd
                 return -1;
         }
 
         Qsav = _Qx;
 
+        //测量更新 -wpd
         try
         {
-            _filter->update(A, P, l, dx, _Qx);
+            _filter->update(A, P, l, dx, _Qx);//测量更新(卡尔曼滤波、均方根滤波) -wpd
         }
         catch (...)
         {
@@ -1525,8 +1526,8 @@ int great::t_gpvtflt::_processEpoch(const t_gtime &runEpoch)
     _filter->add_data(vtpv, nobs_total, npar_number);
 
     t_gallpar param_after = _param;
-
-	_amb_resolution();
+    
+	_amb_resolution(); //模糊度固定 -wpd
 	if (_amb_state) _postRes(A, P, l,dx);
 
     for (unsigned int iPar = 0; iPar < _param.parNumber(); iPar++)
@@ -1632,7 +1633,7 @@ int great::t_gpvtflt::_amb_resolution()
             cout << fixed << setw(20) << " Fix EPO  " << setw(20) << _filter->param()[i].str_type() + "  " << setw(20) << setprecision(5) << _ambfix->getFinalParams()[i].value() << setw(15) << setprecision(5) << _filter->dx()(i + 1) << setw(20) << setprecision(5) << _filter->param()[i].value() + _filter->dx()(i + 1) << setw(20) << setprecision(5) << _filter->stdx()(i + 1) << endl;
         }*/
         _param_fixed = _ambfix->getFinalParams();
-        _prtOut(_epoch, _param_fixed, _filter->Qx(), _data, os, line, true);
+        _prtOut(_epoch, _param_fixed, _filter->Qx(), _data, os, line, true); //输出坐标解算结果文件 -wpd
         _prt_port(_epoch, _param_fixed, _filter->Qx(), _data);
         cout << _epoch.str_ymdhms() << endl;
 	}
@@ -1642,7 +1643,7 @@ int great::t_gpvtflt::_amb_resolution()
         {
             _param_fixed[iPar].value(_param_fixed[iPar].value() + dx_tmp(_param_fixed[iPar].index));
         }
-        _prtOut(_epoch, _param_fixed, Qx_tmp, _data, os, line, true);
+        _prtOut(_epoch, _param_fixed, Qx_tmp, _data, os, line, true);//输出坐标解算结果文件 -wpd
         _prt_port(_epoch, _param_fixed, Qx_tmp, _data);
     }
 
@@ -1851,7 +1852,7 @@ int great::t_gpvtflt::processBatch(const t_gtime &beg_r, const t_gtime &end_r, b
     if (!_beg_end)
         sign = -1;
 
-    InitProc(beg_r, end_r, &subint);
+    InitProc(beg_r, end_r, &subint); //初始化部分参数（时间、测站信息和输出文件头）-wpd
 
     t_gtime now(_beg_time);
 
@@ -1862,7 +1863,9 @@ int great::t_gpvtflt::processBatch(const t_gtime &beg_r, const t_gtime &end_r, b
     while (time_loop)
     {
         if (_beg_end && (now < _end_time || now == _end_time))
+        {
             time_loop = true;
+        }
         else if (_beg_end && now > _end_time)
         {
             time_loop = false;
@@ -1870,7 +1873,9 @@ int great::t_gpvtflt::processBatch(const t_gtime &beg_r, const t_gtime &end_r, b
         }
 
         if (!_beg_end && (now > _end_time || now == _end_time))
+        {
             time_loop = true;
+        }
         else if (!_beg_end && now < _end_time)
         {
             time_loop = false;
@@ -1950,7 +1955,7 @@ bool great::t_gpvtflt::InitProc(const t_gtime &begT, const t_gtime &endT, double
             SPDLOG_LOGGER_INFO(_spdlog, "t_gpvtflt", "Filtering in end -> begin direction!");
     }
 
-    if (_isBase)
+    if (_isBase) //设置基准站和流动站坐标 -wpd
     {
         if (_setCrd() < 0)
             return -1;
@@ -1982,7 +1987,7 @@ bool great::t_gpvtflt::InitProc(const t_gtime &begT, const t_gtime &endT, double
 
 int great::t_gpvtflt::ProcessOneEpoch(const t_gtime &now, vector<t_gsatdata> *data_rover, vector<t_gsatdata> *data_base)
 {
-
+    //获取观测数据 _data ppp, _data_base RTK -wpd
     if (_getData(now, data_rover, false) == 0)
     {
         if (SPDLOG_LEVEL_TRACE == _spdlog->level())
@@ -1993,7 +1998,7 @@ int great::t_gpvtflt::ProcessOneEpoch(const t_gtime &now, vector<t_gsatdata> *da
         return -1;
     }
 
-    // apply dcb
+    // apply dcb, DCB改正 -wpd
     if (_gallbias)
     {
         for (auto &itdata : _data)
@@ -2057,7 +2062,7 @@ int great::t_gpvtflt::ProcessOneEpoch(const t_gtime &now, vector<t_gsatdata> *da
 
     t_gtime obsEpo = _data.begin()->epoch();
 
-    _timeUpdate(obsEpo);
+    _timeUpdate(obsEpo); //随机游走参数的时间更新 -wpd
 
     if (_reset_par > 0)
     {
@@ -2072,6 +2077,7 @@ int great::t_gpvtflt::ProcessOneEpoch(const t_gtime &now, vector<t_gsatdata> *da
         _saveApr(obsEpo, _param, _Qx);
     BASEPOS basepos = dynamic_cast<t_gsetproc*>(_set)->basepos();
 
+    //_processEpoch 单历元滤波解算 -wpd
     int irc_epo = t_gpvtflt::_processEpoch(obsEpo);
 
     if (irc_epo < 0)
@@ -2880,7 +2886,7 @@ void great::t_gpvtflt::_prtOut(t_gtime &epoch, t_gallpar &X, const SymmetricMatr
         xyz2ell(XYZ, Ell, false);
         int itrp = _param.getParam(_site, par_type::TRP, "");
         if (itrp >= 0)
-            _param[itrp].apriori(_gModel->tropoModel()->getZHD(Ell, _epoch));
+            _param[itrp].apriori(_gModel->tropoModel()->getZHD(Ell, _epoch, GPT_MODEL));
     }
     t_gtriple blh; 
     xyz2ell(xyz_ecc, blh, true);
@@ -3921,13 +3927,13 @@ void great::t_gpvtflt::_predictTropo()
                 {
                     if (_valid_ztd_xml)
                     {
-                        _param[i].value(_aprox_ztd_xml - tmpgmodel->tropoModel()->getZHD(Ell, _epoch));
+                        _param[i].value(_aprox_ztd_xml - tmpgmodel->tropoModel()->getZHD(Ell, _epoch, GPT_MODEL));
                     }
                     else
                     {
                         if (tmpgmodel->tropoModel() != 0)
                         {
-                            _param[i].value(tmpgmodel->tropoModel()->getZWD(Ell, _epoch));
+                            _param[i].value(tmpgmodel->tropoModel()->getZWD(Ell, _epoch, GPT_MODEL));
                         }
                     }
                     _Qx(i + 1, i + 1) = ztdInit * ztdInit;
@@ -3969,6 +3975,8 @@ void great::t_gpvtflt::_predictAmb()
 unsigned int great::t_gpvtflt::_cmp_equ(t_gfltEquationMatrix &equ)
 {
     vector<t_gsatdata>::iterator it = _data.begin();
+
+    //逐颗卫星的观测方程 B P L -wpd
     for (it = _data.begin(); it != _data.end();)
     {
         if (!_base_model->cmb_equ(_epoch, _param, *it, equ))

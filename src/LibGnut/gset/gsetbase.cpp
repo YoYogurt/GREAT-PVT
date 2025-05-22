@@ -55,7 +55,7 @@ namespace gnut
 
         _name = file;
 
-        if (!(_irc = _doc.load_file(_name.c_str())))
+        if (!(_irc = _doc.load_file(_name.c_str())))//读取配置文件 -wpd
         {
             cerr << "xconfig: not file read " + _name + " " + string(_irc.description()) << endl;
             _gmutex.unlock();
@@ -190,7 +190,7 @@ namespace gnut
 
         if (!conf.empty())
         {
-            if (read(conf))
+            if (read(conf)) //读取配置文件，存在_doc中 -wpd
             {
                 exit(1);
             } // file XML

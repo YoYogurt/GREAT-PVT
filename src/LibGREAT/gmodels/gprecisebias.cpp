@@ -125,66 +125,237 @@ namespace great
             j = param.getParam(_crt_rec, par_type::GRD_N, "");
             k = param.getParam(_crt_rec, par_type::GRD_E, "");
 
+            //estimating ZTD
+            // PPP的时候_tropoModel为t_gtropo类，湿延迟为零，干延迟为标准大气模型 -wpd
             if (i >= 0)
             {
                 zwd = param[i].value();
                 if (param[i].apriori() > 1E-4 && (zwd == 0.0 || epoch == param[i].beg))
                 {
-                    zwd = _tropoModel->getZWD(ell, epoch);
+                    zwd = _tropoModel->getZWD(ell, epoch, GPT_MODEL);
                     param[i].value(zwd);
                 }
-                zhd = _tropoModel->getZHD(ell, epoch);
+                zhd = _tropoModel->getZHD(ell, epoch, GPT_MODEL);
                 param[i].zhd = zhd;
             }
-            else
+            else // correct ZTD
             {
                 if (_tropoModel != 0)
                 {
-                    _tropoModel->_ele = ele;
-                    zwd = _tropoModel->getZWD(ell, epoch);
-                    zhd = _tropoModel->getZHD(ell, epoch);
+                    zwd = _tropoModel->getZWD(ell, epoch, GPT_MODEL);
+                    zhd = _tropoModel->getZHD(ell, epoch, GPT_MODEL);
                 }
             }
 
+            //get mapping function
             double mfh, mfw, dmfh, dmfw;
             mfh = mfw = dmfh = dmfw = 0.0;
-            if (!WPD_TEST)
-			{
-				if (_mf_ztd == ZTDMPFUNC::GMF)
-				{
-					t_gmf mf;
-					mf.gmf(epoch.mjd(), ell[0], ell[1], ell[2], G_PI / 2.0 - ele,
-						mfh, mfw, dmfh, dmfw);
-				}
-				else if (_mf_ztd == ZTDMPFUNC::COSZ)
-				{
-					mfh = mfw = 1 / sin(ele);
-					dmfh = dmfw = -(cos(ele)) / (sin(ele) * sin(ele));
-				}
-				else
-					return 0.0;
-			}
-			else
-			{
-				//GPT3投影函数
-				mfh = _tropoModel->_map_dty;
-				mfw = _tropoModel->_map_wet;
-			}
+            if (strcmp(GPT_MODEL, "GPT") == 0)
+            {
+                if (_mf_ztd == ZTDMPFUNC::GMF)
+                {
+                    t_gmf mf;
+                    mf.gmf(epoch.mjd(), ell[0], ell[1], ell[2], G_PI / 2.0 - ele,
+                        mfh, mfw, dmfh, dmfw);
+                }
+                else if (_mf_ztd == ZTDMPFUNC::COSZ)
+                {
+                    mfh = mfw = 1 / sin(ele);
+                    dmfh = dmfw = -(cos(ele)) / (sin(ele) * sin(ele));
+                }
+                else
+                    return 0.0;
+            }
+            else if(strcmp(GPT_MODEL, "GPT3") == 0)
+            {
+                if (!_tropoModel->_gpt3.has_gpt3_data())
+                {
+                    _tropoModel->_gpt3.getGPT3Data("gpt3_1.grd", epoch.mjd(), ell[0], ell[1], ell[2], 0
+                        , &_tropoModel->_gpt3._p_gpt3
+                        , &_tropoModel->_gpt3._t_gpt3
+                        , nullptr
+                        , &_tropoModel->_gpt3._tm_gpt3
+                        , &_tropoModel->_gpt3._e_gpt3
+                        , &_tropoModel->_gpt3._ah_gpt3
+                        , &_tropoModel->_gpt3._aw_gpt3
+                        , &_tropoModel->_gpt3._la_gpt3
+                        , nullptr, nullptr, nullptr, nullptr, nullptr);
+                }
 
+                _tropoModel->_gpt3.GPT3_map(_tropoModel->_gpt3._ah_gpt3
+                    , _tropoModel->_gpt3._aw_gpt3
+                    , epoch.mjd(), ell[0], ell[1], ell[2]
+                    , G_PI / 2.0 - ele
+                    , &mfh
+                    , &mfw);
+            }
+            else if(strcmp(GPT_MODEL, "ERA5") == 0 || strcmp(GPT_MODEL, "METEO") == 0)
+            {
+				if (rec == "BOTT")//BOTT
+				{
+					double ah = _tropoModel->h_abs_bott[0];
+					double bh = _tropoModel->h_abs_bott[1];
+					double ch = _tropoModel->h_abs_bott[2];
+					double aw = _tropoModel->w_abs_bott[0];
+					double bw = _tropoModel->w_abs_bott[1];
+					double cw = _tropoModel->w_abs_bott[2];
+					double el = ele;
+
+                    mfh = (1 + (ah / (1 + bh / (1 + ch)))) / (sin(el) + (ah / (sin(el) + bh / (sin(el) + ch))));
+                    mfw = (1 + (aw / (1 + bw / (1 + cw)))) / (sin(el) + (aw / (sin(el) + bw / (sin(el) + cw))));
+
+                    //不估计ZTD,就是RTK模式 -wpd
+                    if (i < 0)
+                    {
+                        if (strcmp(GPT_MODEL, "ERA5") == 0)
+                        {
+                            //ERA5 ZWD and ZHD
+                            for (int i = 0; i < _tropoModel->_sod_era5.size() - 1; i++)
+                            {
+                                if (epoch.sod() >= _tropoModel->_sod_era5[i] && epoch.sod() <= _tropoModel->_sod_era5[i + 1])
+                                {
+                                    zwd = _tropoModel->_zwd_era5_bott[i];
+                                    zhd = _tropoModel->_zhd_era5_bott[i];
+                                    break;
+                                }
+                            }
+                        }
+                        else if(strcmp(GPT_MODEL, "METEO") == 0)
+                        {
+                            //METEO ZWD and ZHD
+                            for (int i = 0; i < _tropoModel->_sod_metro.size() - 1; i++)
+                            {
+                                if (epoch.sod() >= _tropoModel->_sod_metro[i] && epoch.sod() <= _tropoModel->_sod_metro[i + 1])
+                                {
+                                    zwd = _tropoModel->_zwd_metro_bott[i];
+                                    zhd = _tropoModel->_zhd_metro_bott[i];
+                                    break;
+                                }
+                            }
+                        }
+
+                    }
+
+				}
+                else if (rec == "TOP1")//BOTT
+                {
+					double ah = _tropoModel->h_abs_top[0];
+					double bh = _tropoModel->h_abs_top[1];
+					double ch = _tropoModel->h_abs_top[2];
+					double aw = _tropoModel->w_abs_top[0];
+					double bw = _tropoModel->w_abs_top[1];
+					double cw = _tropoModel->w_abs_top[2];
+					double el = ele;
+
+                    mfh = (1 + (ah / (1 + bh / (1 + ch)))) / (sin(el) + (ah / (sin(el) + bh / (sin(el) + ch))));
+                    mfw = (1 + (aw / (1 + bw / (1 + cw)))) / (sin(el) + (aw / (sin(el) + bw / (sin(el) + cw))));
+
+
+                    //不估计ZTD,就是RTK模式 -wpd
+                    if (i < 0)
+                    {
+                        if (strcmp(GPT_MODEL, "ERA5") == 0)
+                        {
+                            //ERA5 ZWD and ZHD
+                            for (int i = 0; i < _tropoModel->_sod_era5.size() - 1; i++)
+                            {
+                                if (epoch.sod() >= _tropoModel->_sod_era5[i] && epoch.sod() <= _tropoModel->_sod_era5[i + 1])
+                                {
+                                    zwd = _tropoModel->_zwd_era5_top[i];
+                                    zhd = _tropoModel->_zhd_era5_top[i];
+                                    break;
+                                }
+                            }
+                        }
+                        else if (strcmp(GPT_MODEL, "METEO") == 0)
+                        {
+                            //METEO ZWD and ZHD
+                            for (int i = 0; i < _tropoModel->_sod_metro.size() - 1; i++)
+                            {
+                                if (epoch.sod() >= _tropoModel->_sod_metro[i] && epoch.sod() <= _tropoModel->_sod_metro[i + 1])
+                                {
+                                    zwd = _tropoModel->_zwd_metro_top[i];
+                                    zhd = _tropoModel->_zhd_metro_top[i];
+                                    break;
+                                }
+                            }
+                        }
+
+                    }
+				}
+
+            }
+            else if (strcmp(GPT_MODEL, "GPT3_ZX") == 0)
+            {
+                if (rec == "BOTT")
+                {
+                    zwd = 0.2186;
+                    zhd = 2.2710;
+                    double ah = _tropoModel->h_abs_bott[0];
+                    double bh = _tropoModel->h_abs_bott[1];
+                    double ch = _tropoModel->h_abs_bott[2];
+                    double aw = _tropoModel->w_abs_bott[0];
+                    double bw = _tropoModel->w_abs_bott[1];
+                    double cw = _tropoModel->w_abs_bott[2];
+                    double el = ele;
+
+                    mfh = (1 + (ah / (1 + bh / (1 + ch)))) / (sin(el) + (ah / (sin(el) + bh / (sin(el) + ch))));
+                    mfw = (1 + (aw / (1 + bw / (1 + cw)))) / (sin(el) + (aw / (sin(el) + bw / (sin(el) + cw))));
+                }
+                else if(rec == "TOP1")
+                {
+                    zwd = 0.1948;
+                    zhd = 2.0240;
+
+                    double ah = _tropoModel->h_abs_top[0];
+                    double bh = _tropoModel->h_abs_top[1];
+                    double ch = _tropoModel->h_abs_top[2];
+                    double aw = _tropoModel->w_abs_top[0];
+                    double bw = _tropoModel->w_abs_top[1];
+                    double cw = _tropoModel->w_abs_top[2];
+                    double el = ele;
+
+                    mfh = (1 + (ah / (1 + bh / (1 + ch)))) / (sin(el) + (ah / (sin(el) + bh / (sin(el) + ch))));
+                    mfw = (1 + (aw / (1 + bw / (1 + cw)))) / (sin(el) + (aw / (sin(el) + bw / (sin(el) + cw))));
+                }
+            }
+            else if (strcmp(GPT_MODEL, "METEO") == 0)
+            {
+
+            }
+            else
+            {
+                if (!_tropoModel->_gpt3.has_gpt3_data())
+                {
+                    _tropoModel->_gpt3.getGPT3Data("gpt3_1.grd", epoch.mjd(), ell[0], ell[1], ell[2], 0
+                        , &_tropoModel->_gpt3._p_gpt3
+                        , &_tropoModel->_gpt3._t_gpt3
+                        , nullptr
+                        , &_tropoModel->_gpt3._tm_gpt3
+                        , &_tropoModel->_gpt3._e_gpt3
+                        , &_tropoModel->_gpt3._ah_gpt3
+                        , &_tropoModel->_gpt3._aw_gpt3
+                        , &_tropoModel->_gpt3._la_gpt3
+                        , nullptr, nullptr, nullptr, nullptr, nullptr);
+                }
+
+                _tropoModel->_gpt3.GPT3_map(_tropoModel->_gpt3._ah_gpt3
+                    , _tropoModel->_gpt3._aw_gpt3
+                    , epoch.mjd(), ell[0], ell[1], ell[2]
+                    , G_PI / 2.0 - ele
+                    , &mfh
+                    , &mfw);
+            }
 
             satdata.addmfH(mfh);
             satdata.addmfW(mfw);
 
-            delay = mfh * zhd + mfw * zwd;
-
-            if (!WPD_TEST)
+            delay = mfh * zhd + mfw * zwd;       
+            //估计对流层就改正湿延迟；否则湿延迟就不加改正
+            if (!_trop_est && satdata.obsWithCorr() && strcmp(GPT_MODEL, "GPT") == 0)
             {
-                if (!_trop_est && satdata.obsWithCorr())
-                {
-                    delay = mfh * zhd;
-                }
+                delay = mfh * zhd;
             }
-
 
             double grdN, grdE;
             grdN = grdE = 0.0;
