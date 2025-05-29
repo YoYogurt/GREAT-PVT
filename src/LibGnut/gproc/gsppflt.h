@@ -124,6 +124,9 @@ namespace gnut
         t_whitenoise *_clkStoModel; ///< clk stochastic model
         t_whitenoise *_crdStoModel; ///< crd stochastic model
 
+        vector<double> _P_sd;  ///< 星间单差观测值的权 -wpd
+        ColumnVector _v_dd;     ///< RTK 双差残差      -wpd
+
         t_gallpar _param;
         SymmetricMatrix _Qx;     ///< Parameters and covariance matrix
         DiagonalMatrix _Noise;   ///< Noise matrix

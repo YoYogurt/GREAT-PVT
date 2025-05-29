@@ -129,6 +129,15 @@ namespace gnut
             delete _flt;
         }
 
+        if (_iof_res)
+        {
+            if (_iof_res->is_open())
+            {
+                _iof_res->close();
+            };
+            delete _iof_res;
+        }
+
         this->write(_kml_name);
     }
 
@@ -227,6 +236,16 @@ namespace gnut
             _flt->tsys(t_gtime::GPS);
             _flt->mask(tmp);
             _flt->append(dynamic_cast<t_gsetout *>(_set)->append());
+        }
+
+        tmp = dynamic_cast<t_gsetout*>(_set)->outputs("res");
+        if (!tmp.empty() && !_read)
+        {
+            substitute(tmp, "$(rec)", _site, false);
+            _iof_res = new t_giof;
+            _iof_res->tsys(t_gtime::GPS);
+            _iof_res->mask(tmp);
+            _iof_res->append(dynamic_cast<t_gsetout*>(_set)->append());
         }
 
         tmp = dynamic_cast<t_gsetout *>(_set)->outputs("kml");

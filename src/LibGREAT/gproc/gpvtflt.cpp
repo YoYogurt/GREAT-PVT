@@ -571,6 +571,7 @@ int great::t_gpvtflt::_combineDD(Matrix &A, SymmetricMatrix &P, ColumnVector &l)
                 enum GSYS gs;
                 if (!isSetRefSat || (_observ == OBSCOMBIN::RAW_MIX && !isPhaseProcess))
                     sat_ref.clear();
+                //设置参rtk考星 -wpd
                 if (sat_ref.empty())
                 {
                     for (auto it = _data.begin(); it != _data.end(); it++)
@@ -594,7 +595,11 @@ int great::t_gpvtflt::_combineDD(Matrix &A, SymmetricMatrix &P, ColumnVector &l)
                             FREQ_SEQ f3 = FREQ_3;
                             FREQ_SEQ f4 = FREQ_4;
                             FREQ_SEQ f5 = FREQ_5;
-                            if (_valid_residual(isPhaseProcess, sat, f1, index_l) == false || (_frequency >= 2 && nf >= 2 && _valid_residual(isPhaseProcess, sat, f2, index_l) == false) || (_frequency >= 3 && nf >= 3 && _valid_residual(isPhaseProcess, sat, f3, index_l) == false) || (_frequency >= 4 && nf >= 4 && _valid_residual(isPhaseProcess, sat, f4, index_l) == false) || (_frequency >= 5 && nf >= 5 && _valid_residual(isPhaseProcess, sat, f5, index_l) == false))
+                            if (_valid_residual(isPhaseProcess, sat, f1, index_l) == false 
+                                || (_frequency >= 2 && nf >= 2 && _valid_residual(isPhaseProcess, sat, f2, index_l) == false) 
+                                || (_frequency >= 3 && nf >= 3 && _valid_residual(isPhaseProcess, sat, f3, index_l) == false) 
+                                || (_frequency >= 4 && nf >= 4 && _valid_residual(isPhaseProcess, sat, f4, index_l) == false) 
+                                || (_frequency >= 5 && nf >= 5 && _valid_residual(isPhaseProcess, sat, f5, index_l) == false))
                                 continue;
                         }
                         else if (_valid_residual(isPhaseProcess, sat, f, index_l) == false)
@@ -607,7 +612,7 @@ int great::t_gpvtflt::_combineDD(Matrix &A, SymmetricMatrix &P, ColumnVector &l)
                             continue;
                         }
 
-                        if (it->ele_deg() >= obs_sat_ref.ele_deg())
+                        if (it->ele_deg() >= obs_sat_ref.ele_deg())//高度角更大的作为参考星 -wpd
                         {
                             sat_ref = sat;
                             obs_sat_ref = *it;
@@ -1440,6 +1445,12 @@ int great::t_gpvtflt::_processEpoch(const t_gtime &runEpoch)
 
         if (_isBase)
         {
+            _P_sd.clear();
+            for (int i = 0; i < P.nrows(); i++)
+            {
+                _P_sd.push_back(P[i][i]);
+            }
+
             if (_combineDD(A, P, l) < 0) // 双差观测方程，更新Apl矩阵 -wpd
                 return -1;
         }
@@ -1528,7 +1539,10 @@ int great::t_gpvtflt::_processEpoch(const t_gtime &runEpoch)
     t_gallpar param_after = _param;
     
 	_amb_resolution(); //模糊度固定 -wpd
-	if (_amb_state) _postRes(A, P, l,dx);
+    if (_amb_state)
+    {
+        _postRes(A, P, l, dx);
+    }
 
     for (unsigned int iPar = 0; iPar < _param.parNumber(); iPar++)
     {
@@ -1590,6 +1604,9 @@ int great::t_gpvtflt::_amb_resolution()
             if (!ref_valid)
                 return 0;
         }
+
+        _str_ref_sat = *_sat_ref.begin(); //-wpd
+
         if (!isSetRefSat)
             _sat_ref.clear();
         _ambfix->setSatRef(_sat_ref);
@@ -1652,6 +1669,21 @@ int great::t_gpvtflt::_amb_resolution()
     {
         _flt->write(os.str().c_str(), os.str().size());
         _flt->flush();
+    }
+
+    // 输出RTK 残差文件 -wpd
+    if (_isBase)
+    {
+        ostringstream os_res;
+        if (_amb_state) //fixed
+        {
+            _prt_port_res(_epoch, _param_fixed, _v_dd, _data, os_res);
+        }
+        if (_iof_res)
+        {
+            _iof_res->write(os_res.str().c_str(), os_res.str().size());
+            _iof_res->flush();
+        }
     }
 
     return 1;
@@ -3081,6 +3113,98 @@ void great::t_gpvtflt::_prt_port(t_gtime &epoch, t_gallpar &X, const SymmetricMa
        << endl;
 }
 
+void great::t_gpvtflt::_prt_port_res(t_gtime& epo, t_gallpar& X, const ColumnVector& v, vector<t_gsatdata>& data, ostringstream& os)
+{  
+    map<FREQ_SEQ, GOBSBAND> crt_bands = _band_index[data[0].gsys()];
+
+    int n_pair = data.size() - 1;// n_sat_pair
+    int i_frq = 0;
+    int isat = 0;           //卫星对索引
+
+    //暂时不处理这种情况，有点花时间，可能是双频4个观测值中缺少其中一个导致的，没有影响解算 -wpd
+    if (v.size() != n_pair * 4)
+    {
+        return;
+    }
+
+    // 找到参考星数据
+    t_gsatdata rs_data;//ref_sat_data
+    double rs_p_phase[2] = { 0.0, 0.0 };
+    double rs_p_code[2] = { 0.0, 0.0 };
+
+    for (int i = 0; i < data.size(); i++)
+    {
+        //跳过参考星
+        if (_str_ref_sat == data[i].sat())
+        {
+            rs_p_code[0] = _P_sd[i * 4 + 0];
+            rs_p_phase[0] = _P_sd[i * 4 + 1];
+            rs_p_code[1] = _P_sd[i * 4 + 2];
+            rs_p_phase[1] = _P_sd[i * 4 + 3];
+            rs_data = data[i];
+            break;
+        }
+    }
+
+   //输出 TIM时间
+    os << "TIM"
+        << setw(5) << epo.year()
+        << setw(3) << epo.mon()
+        << setw(3) << epo.day()
+        << setw(3) << epo.hour()
+        << setw(3) << epo.mins()
+        << fixed << setw(10) << epo.secs()
+        << setw(7) << epo.mjd()
+        << setw(7) << epo.sod()
+        << setw(7) << 1
+        << endl;
+
+    //输出每颗卫星的残差
+    for (int i = 0; i < data.size(); i++)
+    {
+        //跳过参考星
+        if (_str_ref_sat == data[i].sat())
+        {
+            continue;
+        }
+
+        //每个频点
+        for (const auto& iter : crt_bands)
+        {
+            os << setw(3) << data[i].sat()             // prn G08
+                << " " << "L" << iter.first << " "
+                << fixed << setw(10) << setprecision(4) << v(1 + isat + i_frq * n_pair) * 100    //L1 L2 unit:cm
+                << fixed << setw(10) << setprecision(4) << v(1 + isat + i_frq * n_pair + 2 * n_pair) * 100; //P1 P2 unit:cm
+            
+            //权阵
+            os << fixed << setw(14) << setprecision(8) << 1.0 / _P_sd[i * 4 + 1 + i_frq * 2];
+            os << fixed << setw(14) << setprecision(8) << 1.0 / _P_sd[i * 4 + 0 + i_frq * 2];
+
+            //高度角和方位角
+            os << fixed << setw(10) << setprecision(3) << data[i].ele_deg()
+                << fixed << setw(10) << setprecision(3) 
+                << R2D * (data[i].azi_sat() >  G_PI ? data[i].azi_sat() -2*G_PI : data[i].azi_sat());
+
+            //参考星、权阵、高度角和方位角
+            os << setw(5) << rs_data.sat();
+            //权阵
+            os << fixed << setw(14) << setprecision(8) << 1.0 / rs_p_phase[i_frq]
+                << fixed << setw(14) << setprecision(8) << 1.0 / rs_p_code[i_frq];
+            //高度角和方位角
+            os << fixed << setw(10) << setprecision(3) << rs_data.ele_deg()
+                << fixed << setw(10) << setprecision(3) 
+                << R2D * (rs_data.azi_sat() >  G_PI ? rs_data.azi_sat() - 2 * G_PI : rs_data.azi_sat());
+
+            os << endl;
+            i_frq++; // 0 1
+        }
+        i_frq = 0;
+        isat++;
+    }
+
+    return;
+}
+
 void great::t_gpvtflt::_prtOutHeader()
 {
     ostringstream os;
@@ -3159,6 +3283,33 @@ void great::t_gpvtflt::_prtOutHeader()
     {
         _flt->write(os.str().c_str(), os.str().size());
         _flt->flush();
+    }
+
+    //输出RTK 残差文件头 -wpd
+    if (_isBase)
+    {
+        //残差文件头 to do
+        os.str("");
+        vector<string> strs
+            = { "Residuals                                                   COMMENT",
+            "        32                                                  # OF SAT",
+            "         G         2                     1 2                # of FRQ",
+            "G01 G02 G03 G04 G05 G06 G07 G08 G09 G10 G11 G12 G13 G14 SATELLITE LIST",
+            "G15 G16 G17 G18 G19 G20 G21 G22 G23 G24 G25 G26 G27 G28 SATELLITE LIST",
+            "G29 G30 G31 G32 SATELLITE LIST",
+            "                                                                END OF HEADER" };
+
+        for (int i = 0; i < strs.size(); i++)
+        {
+            os << strs[i] << endl;
+        }
+        // Print res results
+        if (_iof_res)
+        {
+            _iof_res->write(os.str().c_str(), os.str().size());
+            _iof_res->flush();
+        }
+
     }
 }
 
@@ -3998,6 +4149,16 @@ void great::t_gpvtflt::_posterioriTest(const Matrix& A, const SymmetricMatrix& P
     ColumnVector v_orig, v_test;
     // post-fit residuals
     v_orig = l - A * dx;
+    _v_dd = v_orig;
+
+    //for (int i = 1; i < v_orig.nrows(); i++)
+    //{
+    //    printf("%d\t%.12lf\n", i,v_orig(i));
+    //}
+    //for (int i = 1; i < v_orig.nrows(); i++)
+    //{
+    //    printf("%d\t%.12lf\n", i, _v_dd(i));
+    //}
 
     // normalized post-fit residuals
     Matrix Qv = A * _Qx * A.t() + P.i();

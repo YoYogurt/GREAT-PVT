@@ -53,6 +53,7 @@ namespace gnut
         RINEXO_INP,     ///< rinexo file
         SP3_INP,        ///< SP3 file
         UPD_INP,        ///< upd file
+        MHM_INP,        ///< MHM file -wpd
         UNDEF = -1
     };
 

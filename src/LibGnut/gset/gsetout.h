@@ -47,7 +47,8 @@ namespace gnut
         XXX_OUT,
         LOG_OUT,
         PPP_OUT,
-        FLT_OUT
+        FLT_OUT,
+        RES_OUT //输出残差文件
     };
 
     //输出文件的数据类，包含输出文件的类型等信息 -wpd

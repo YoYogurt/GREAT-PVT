@@ -177,6 +177,8 @@ namespace great
         virtual void _prtOut(t_gtime &epo, t_gallpar &X, const SymmetricMatrix &Q, vector<t_gsatdata> &data, ostringstream &os, xml_node &node, bool saveProd = true);
         virtual void _prt_port(t_gtime &epo, t_gallpar &X, const SymmetricMatrix &Q, vector<t_gsatdata> &data);
 
+        void _prt_port_res(t_gtime& epo, t_gallpar& X, const ColumnVector& v, vector<t_gsatdata>& data, ostringstream& os);
+
         /** @brief print  the result. */
         void _prtOutHeader();
 
@@ -243,7 +245,8 @@ namespace great
         string _site_base;                 ///< base site name; 
         vector<t_gsatdata> _data_base;     ///< base data in every epoch; 
         t_gpppmodel* _gModel_base;         ///< base model 
-        set<string> _sat_ref;              ///< reference sat 
+        set<string> _sat_ref;              ///< reference sat
+        string _str_ref_sat;               ///< 参考星
         map<GSYS, string> _ipSatRep;       ///< input reference satellite
         t_gupd *_gupd = nullptr;           ///< upd
         t_gambiguity *_ambfix = nullptr;   ///< ambfix

@@ -32,10 +32,12 @@ namespace gnut
     _IFMT_supported.insert(IFMT::LEAPSECOND_INP);
     _IFMT_supported.insert(IFMT::UPD_INP);
     _IFMT_supported.insert(IFMT::IFCB_INP);
+    _IFMT_supported.insert(IFMT::MHM_INP);
 
     _OFMT_supported.insert(LOG_OUT);
     _OFMT_supported.insert(PPP_OUT);
     _OFMT_supported.insert(FLT_OUT);
+    _OFMT_supported.insert(RES_OUT);
 
     
   }

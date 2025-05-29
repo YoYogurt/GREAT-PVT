@@ -367,6 +367,4 @@ namespace gnut
         _mutex.unlock();
         return consume;
     }
-
-
 } // namespace

@@ -50,9 +50,11 @@ namespace gnut
         /** @brief default destructor. */
         virtual ~t_gio();
 
+        // 启动读写 -wpd
         /** @brief start reading (could be run in a separate thread). */
         virtual void run_read();
 
+        // 设置解码类 -wpd
         /** @brief start writing (could be run in a separate thread). */
         virtual void coder(t_gcoder *coder) { _coder = coder; }
 
@@ -74,7 +76,7 @@ namespace gnut
             return 0;
         }
         /**
-        * @brief set file://dir/name.
+        * @brief set file://dir/name. 设置文件路径 -wpd
         * @param[in]    str        file path
         * @return
         *    @retval =-1 false

@@ -289,8 +289,18 @@ namespace great
             {
                 if (rec == "BOTT")
                 {
-                    zwd = 0.2186;
-                    zhd = 2.2710;
+                    //从海平面处归化高程
+                    //zwd = 0.2186;
+                    //zhd = 2.2710;
+                     
+                    //从BOTT处归化高程
+                    //zwd = 0.2178;
+                    //zhd = 2.2904;
+
+                    //VMF1
+                    zwd = 0.2283;
+                    zhd = 2.2839;
+
                     double ah = _tropoModel->h_abs_bott[0];
                     double bh = _tropoModel->h_abs_bott[1];
                     double ch = _tropoModel->h_abs_bott[2];
@@ -304,8 +314,17 @@ namespace great
                 }
                 else if(rec == "TOP1")
                 {
-                    zwd = 0.1948;
-                    zhd = 2.0240;
+                    //从海平面处归化高程
+                    //zwd = 0.1948;
+                    //zhd = 2.0240;
+
+                    //从BOTT处归化高程
+                    //zwd = 0.1941;
+                    //zhd = 2.0407;
+
+                    //VMF3
+                    zwd = 0.1512;
+                    zhd = 2.0723;
 
                     double ah = _tropoModel->h_abs_top[0];
                     double bh = _tropoModel->h_abs_top[1];
@@ -318,10 +337,6 @@ namespace great
                     mfh = (1 + (ah / (1 + bh / (1 + ch)))) / (sin(el) + (ah / (sin(el) + bh / (sin(el) + ch))));
                     mfw = (1 + (aw / (1 + bw / (1 + cw)))) / (sin(el) + (aw / (sin(el) + bw / (sin(el) + cw))));
                 }
-            }
-            else if (strcmp(GPT_MODEL, "METEO") == 0)
-            {
-
             }
             else
             {

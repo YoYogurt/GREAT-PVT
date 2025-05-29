@@ -200,4 +200,22 @@ namespace great
     }
 
 
+    t_mhm::t_mhm(t_gsetbase* s, string version, int sz)
+    {
+    }
+
+    t_mhm::~t_mhm()
+    {
+    }
+
+    int t_mhm::decode_head(char* buff, int sz, vector<string>& errmsg)
+    {
+        return 0;
+    }
+
+    int t_mhm::decode_data(char* buff, int sz, int& cnt, vector<string>& errmsg)
+    {
+        return 0;
+    }
+
 } //namespace

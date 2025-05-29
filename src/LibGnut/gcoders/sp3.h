@@ -40,11 +40,11 @@ namespace gnut
         /** @brief default destructor. */
         virtual ~t_sp3(){};
 
-        /** @brief decode head. */
+        /** @brief decode head. 解码文件头 -wpd */
         virtual int decode_head(char *buff, int sz, vector<string> &errmsg);
 
         /**
-         * @brief 
+         * @brief  解码文件块 -wpd
          * 
          * @param buff 
          * @param sz 

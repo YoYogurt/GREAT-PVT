@@ -114,4 +114,16 @@ namespace great
         }
     }
 
+    t_gmhm::t_gmhm()
+    {
+    }
+
+    t_gmhm::t_gmhm(t_spdlog spdlog)
+    {
+    }
+
+    t_gmhm::~t_gmhm()
+    {
+    }
+
 } //namespace

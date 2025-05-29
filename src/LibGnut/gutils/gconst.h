@@ -29,7 +29,7 @@ using namespace std;
 namespace gnut
 {
 // GPT GPT3 ERA5 GPT3_ZX METEO
-#define GPT_MODEL ("ERA5") //GPT; GPT3 用于PPP和零基线RTK;ERA5,ERA5只能用于DMS的数据解算;GPT3_ZX
+#define GPT_MODEL ("GPT") //GPT; GPT3 用于PPP和零基线RTK;ERA5,ERA5只能用于DMS的数据解算;GPT3_ZX
 
 // function
 // get min

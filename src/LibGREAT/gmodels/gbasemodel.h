@@ -41,7 +41,7 @@ namespace great
         t_gbaseEquation &operator+(t_gbaseEquation &Other);
 
         vector<vector<pair<int, double>>> B; ///< coeff of equations
-        vector<double> P;                    ///< weight of equations
+        vector<double> P;                    ///< weight of equations  权阵，rtk单差残差 -wpd
         vector<double> l;                    ///< res of equations
     };
 

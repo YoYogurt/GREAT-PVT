@@ -57,7 +57,7 @@ namespace gnut
         virtual string mask();
 
         /**
-        * @brief set file://dir/name. 
+        * @brief set file://dir/name. 设置文件路径 -wpd
         * @param[in]    str        file path 
         * @return 
         *    @retval =-1 false

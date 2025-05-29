@@ -77,7 +77,6 @@ namespace gnut
     protected:
     private:
     };
-
 } // namespace
 
 #endif

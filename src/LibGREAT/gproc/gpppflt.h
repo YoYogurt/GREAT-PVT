@@ -57,7 +57,8 @@ namespace gnut
 
         xml_node line;                      ///< working line read from
         bool _read;                         ///< is read
-        t_giof *_flt;                       ///< filter file 
+        t_giof *_flt;                       ///< filter file 输出定位结果文件 -wpd
+        t_giof* _iof_res = nullptr;                   ///< filter file 输出定位结果文件 -wpd to do 初始化
         string _kml_name;                   ///< kml name
         bool _kml;                          ///< is kml
         bool _beg_end;                      ///< processing direction

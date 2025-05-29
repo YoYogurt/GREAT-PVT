@@ -37,6 +37,18 @@ using namespace gnut;
 namespace great
 {
 
+    class LibGREAT_LIBRARY_EXPORT t_gmhm : public t_gdata
+    {
+    public:
+        /** @brief default constructor. */
+        t_gmhm();
+
+        t_gmhm(t_spdlog spdlog);
+
+        /** @brief default destructor. */
+        ~t_gmhm();
+    };
+
     /**
     *@brief       Class for storaging one satellite upd data
     */
@@ -77,7 +89,7 @@ namespace great
         virtual ~t_gupd();
 
         /**
-        * @brief add upd data of one epoch/one satellite.
+        * @brief add upd data of one epoch/one satellite. 存入数据 -wpd
         * @param[in]  upd_type    upd type
         * @param[in]  epoch          epoch.
         * @param[in]  prn          satellite name.
@@ -87,7 +99,7 @@ namespace great
         void add_sat_upd(UPDTYPE upd_type, t_gtime epoch, string prn, t_updrec one_sat_upd);
 
         /**
-        * @brief get upd data of one epoch/all satellite.
+        * @brief get upd data of one epoch/all satellite. 取出数据 -wpd
         * @param[in] upd_type    upd type
         * @param[in] t           epoch time
         * @param[in] str         satellite name

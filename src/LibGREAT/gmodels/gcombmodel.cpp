@@ -757,6 +757,7 @@ namespace great
             t_gbaseEquation tempP, tempL;
             vector<int> index(10, 0); 
 
+            // 测站循环 - wpd
             for (int isite = 0; isite < 2; isite++) //isite用于区分基准站和流动站，0为基准站，1为流动站 -wpd
             {
                 t_gsatdata *satdata_ptr; //数据指针 -wpd
@@ -765,6 +766,7 @@ namespace great
                 else
                     satdata_ptr = &obsdata; //流动站数据 -wpd
 
+                // 频率循环 - wpd
                 for (const auto &iter : crt_bands)
                 {
                     if (iter.first > _frequency)
@@ -824,11 +826,11 @@ namespace great
                         tempL.B.back().push_back(make_pair(idx + 1, 1.0));
                         tempL.l.back() -= params_temp[idx].value();
                     }
-                }
-            }
+                } // 频率循环 - wpd
+            } //for (int isite = 0; isite < 2; isite++) // 测站循环 - wpd
 
             int freq_count = 0;
-            for (const auto &iter : crt_bands)
+            for (const auto &iter : crt_bands)// 频率循环 - wpd
             {
                 if (iter.first > _frequency)
                     continue; 
@@ -872,7 +874,7 @@ namespace great
                         continue;
                     B_L.emplace_back(b.first, -b.second);
                 }
-
+                //星间单差 -wpd
                 P_P = 1 / (1 / tempP.P[irover] + 1 / tempP.P[ibase]);
                 l_P = tempP.l[irover] - tempP.l[ibase];
                 P_L = 1 / (1 / tempL.P[irover] + 1 / tempL.P[ibase]);
@@ -882,7 +884,7 @@ namespace great
                 t_gobscombtype typeL(obsL, OBSCOMBIN::RAW_ALL);
                 equ_ALL.add_equ(B_P, P_P, l_P, obsdata.site(), obsdata.sat(), typeP, false);
                 equ_ALL.add_equ(B_L, P_L, l_L, obsdata.site(), obsdata.sat(), typeL, false);
-            }
+            }//for (const auto& iter : crt_bands) 频率循环 -wpd
 
             // add result
             if (dynamic_cast<t_gfltEquationMatrix *>(&result))

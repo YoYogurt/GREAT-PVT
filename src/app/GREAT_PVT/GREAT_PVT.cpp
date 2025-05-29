@@ -61,6 +61,7 @@ int main(int argc, char** argv)
     t_gallobj*  gobj = new t_gallobj(my_logger, gpcv, gotl); gobj->spdlog(my_logger);
     t_gupd*     gupd = nullptr; if (gset.input_size("upd") > 0) { gupd = new t_gupd;  gupd->spdlog(my_logger); }
     t_gifcb*    gifcb = nullptr;  if (gset.input_size("ifcb") > 0) { gifcb = new t_gifcb;  gifcb->spdlog(my_logger); }
+    t_gmhm*     gmhm = nullptr;   if (gset.input_size("mhm") > 0) { gmhm = new t_gmhm;  gmhm->spdlog(my_logger); }
 
     // vgppp for the process of ppp with filter
     vector<t_gpvtflt*> vgpvt;
@@ -140,6 +141,7 @@ int main(int argc, char** argv)
         else if (ifmt == IFMT::DE_INP) { gdata = gde; tgcoder = new t_dvpteph405(&gset, "", 4096); }
         else if (ifmt == IFMT::EOP_INP) { gdata = gerp; tgcoder = new t_poleut1(&gset, "", 4096); }
         else if (ifmt == IFMT::IFCB_INP) { gdata = gifcb; tgcoder = new t_ifcb(&gset, "", 4096); }
+        else if (ifmt == IFMT::MHM_INP) { gdata = gmhm; tgcoder = new t_mhm(&gset, "", 4096); }
         else 
         {
             SPDLOG_LOGGER_INFO(my_logger, "Error: unrecognized format " + int2str(int(ifmt)));
